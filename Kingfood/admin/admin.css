@@ -1,0 +1,125 @@
+/* Reset CSS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* Header */
+header {
+    background: #333;
+    color: #fff;
+    padding: 1rem 0;
+}
+
+header h1 {
+    margin: 0;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+}
+
+nav ul li {
+    margin-right: 1rem;
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Main */
+main {
+    padding: 2rem 0;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+table th, table td {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+}
+
+table th {
+    background: #f4f4f4;
+}
+
+/* Button */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #333;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #555;
+}
+
+/* Login */
+.login-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #f4f4f4;
+    border-radius: 5px;
+}
+
+.login-container h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.login-container form div {
+    margin-bottom: 1rem;
+}
+
+.login-container label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 0.5rem;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 0.5rem;
+    background: #333;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.login-container button:hover {
+    background: #555;
+}
+
+.error {
+    color: red;
+    text-align: center;
+    margin-bottom: 1rem;
+} 

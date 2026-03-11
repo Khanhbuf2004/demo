@@ -1,0 +1,587 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VietMart</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background-color: #fff;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        .top-bar .contact {
+            display: flex;
+            gap: 15px;
+        }
+        .top-bar .contact i {
+            color: #2ecc71;
+            margin-right: 5px;
+        }
+        .top-bar .support a {
+            color: #333;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .top-bar .support a:hover {
+            color: #2ecc71;
+        }
+        .main-nav {
+            display: flex;
+            align-items: center;
+            max-width: 1200px;
+            margin: 10px auto;
+            gap: 20px;
+        }
+        .main-nav .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2ecc71;
+            background-color: #e8f7e8;
+            padding: 5px 15px;
+            border-radius: 5px;
+        }
+        .main-nav .search-bar {
+            flex: 1;
+            position: relative;
+        }
+        .main-nav .search-bar input {
+            width: 100%;
+            padding: 8px 40px 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .main-nav .search-bar i {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #2ecc71;
+        }
+        .main-nav .nav-icons {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+        }
+        .main-nav .nav-icons a {
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .main-nav .nav-icons a:hover {
+            color: #2ecc71;
+        }
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .category {
+            position: relative;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .category:hover {
+            color: #2ecc71;
+        }
+        .category .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            z-index: 10;
+            min-width: 300px;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+        }
+        .category:hover .dropdown {
+            display: flex;
+        }
+        .dropdown .sub-items {
+            flex: 1;
+        }
+        .dropdown .sub-items a {
+            display: block;
+            padding: 5px 0;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .dropdown .sub-items a:hover {
+            color: #2ecc71;
+        }
+        .dropdown img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .product-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .product-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ff4500;
+            border-bottom: 2px solid #ff4500;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .product-section h2 i {
+            margin-right: 10px;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            background-color: #fff;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .product-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .product-card h3 {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #333;
+        }
+        .product-card .price {
+            color: #ff4500;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .product-card .new {
+            background-color: #d3f9d8;
+            color: #27ae60;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .product-card .sales {
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        .product-card .rating {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .product-card .rating i.filled {
+            color: #ffd700;
+        }
+        .product-card .rating i.empty {
+            color: #ddd;
+        }
+        .product-card .add-to-cart {
+            display: none;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            background-color: #27ae60;
+            color: #fff;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .product-card:hover .add-to-cart {
+            display: block;
+        }
+        .flash-sale {
+            background-color: #fff5e6;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        footer {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        footer a {
+            color: #2ecc71;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        footer a:hover {
+            color: #fff;
+        }
+        footer .footer-links {
+            margin-bottom: 10px;
+        }
+        footer .footer-links a {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="top-bar">
+            <div class="contact">
+                <span><i class="fas fa-phone"></i>Hotline: 1900-6750</span>
+                <span><i class="fas fa-truck"></i>Miễn phí vận chuyển từ 200K</span>
+            </div>
+            <div class="support">
+                <a href="#">Theo dõi đơn hàng</a>
+                <a href="#">Hỗ trợ</a>
+            </div>
+        </div>
+        <div class="main-nav">
+            <div class="logo">VietMart</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Tìm kiếm sản phẩm...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="nav-icons">
+                <a href="#"><i class="fas fa-user"></i>Tài khoản</a>
+                <a href="#"><i class="far fa-heart"></i>Yêu thích</a>
+                <a href="#"><i class="fas fa-shopping-cart"></i>Giỏ hàng</a>
+            </div>
+        </div>
+    </header>
+    <div class="categories">
+        <div class="category">
+            Gạo & Ngũ cốc <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="sub-items">
+                    <a href="#">Các Loại Siro</a>
+                    <a href="#">Bột Sữa</a>
+                    <a href="#">Dung cụ</a>
+                    <a href="#">Máy Móc</a>
+                </div>
+                <img src="https://via.placeholder.com/100" alt="Gạo & Ngũ cốc">
+            </div>
+        </div>
+        <div class="category">
+            Dầu ăn <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="sub-items">
+                    <a href="#">Dầu Đậu Nành</a>
+                    <a href="#">Dầu Hạt Cải</a>
+                    <a href="#">Dầu Ô Liu</a>
+                </div>
+                <img src="https://via.placeholder.com/100" alt="Dầu ăn">
+            </div>
+        </div>
+        <div class="category">
+            Gia vị <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="sub-items">
+                    <a href="#">Muối</a>
+                    <a href="#">Tiêu</a>
+                    <a href="#">Nước Mắm</a>
+                </div>
+                <img src="https://via.placeholder.com/100" alt="Gia vị">
+            </div>
+        </div>
+        <div class="category">
+            Nước mắm <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="sub-items">
+                    <a href="#">Nước Mắm Phú Quốc</a>
+                    <a href="#">Nước Mắm Nha Trang</a>
+                    <a href="#">Nước Mắm Cát Hải</a>
+                </div>
+                <img src="https://via.placeholder.com/100" alt="Nước mắm">
+            </div>
+        </div>
+        <div class="category">
+            Đồ gia dụng <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="sub-items">
+                    <a href="#">Nồi</a>
+                    <a href="#">Chảo</a>
+                    <a href="#">Dao</a>
+                </div>
+                <img src="https://via.placeholder.com/100" alt="Đồ gia dụng">
+            </div>
+        </div>
+        <div class="category">
+            Thực phẩm tươi <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="sub-items">
+                    <a href="#">Rau Củ</a>
+                    <a href="#">Thịt</a>
+                    <a href="#">Hải Sản</a>
+                </div>
+                <img src="https://via.placeholder.com/100" alt="Thực phẩm tươi">
+            </div>
+        </div>
+        <div class="category">
+            Bánh kẹo <i class="fas fa-chevron-down"></i>
+            <div class="dropdown">
+                <div class="sub-items">
+                    <a href="#">Bánh Quy</a>
+                    <a href="#">Kẹo Dẻo</a>
+                    <a href="#">Socola</a>
+                </div>
+                <img src="https://via.placeholder.com/100" alt="Bánh kẹo">
+            </div>
+        </div>
+    </div>
+    <div class="product-section">
+        <div class="flash-sale">
+            <h2><i class="fas fa-bolt"></i> Flash Sale</h2>
+            <div class="product-grid">
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/200x150" alt="Gạo ST">
+                    <h3>Gạo ST 5kg</h3>
+                    <div class="price">150.000đ</div>
+                    <div class="new">Mới</div>
+                    <div class="sales">Đã bán 23</div>
+                    <div class="rating">
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="far fa-star empty"></i>
+                    </div>
+                    <div class="add-to-cart">Thêm vào giỏ</div>
+                </div>
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/200x150" alt="Rau củ">
+                    <h3>Rau củ hữu cơ</h3>
+                    <div class="price">200.000đ</div>
+                    <div class="new">Mới</div>
+                    <div class="sales">Đã bán 15</div>
+                    <div class="rating">
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                    </div>
+                    <div class="add-to-cart">Thêm vào giỏ</div>
+                </div>
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/200x150" alt="Tai nghe">
+                    <h3>Tai nghe Bluetooth</h3>
+                    <div class="price">250.000đ</div>
+                    <div class="new">Mới</div>
+                    <div class="sales">Đã bán 10</div>
+                    <div class="rating">
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="far fa-star empty"></i>
+                        <i class="far fa-star empty"></i>
+                    </div>
+                    <div class="add-to-cart">Thêm vào giỏ</div>
+                </div>
+                <div class="product-card">
+                    <img src="https://via.placeholder.com/200x150" alt="Trà Thái">
+                    <h3>Trà Thái Nguyên</h3>
+                    <div class="price">180.000đ</div>
+                    <div class="new">Mới</div>
+                    <div class="sales">Đã bán 30</div>
+                    <div class="rating">
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="fas fa-star filled"></i>
+                        <i class="far fa-star empty"></i>
+                    </div>
+                    <div class="add-to-cart">Thêm vào giỏ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="product-section">
+        <h2><i class="fas fa-box-open"></i> Sản phẩm mới</h2>
+        <div class="product-grid">
+            <div class="product-card">
+                <img src="https://via.placeholder.com/200x150" alt="Nước mắm">
+                <h3>Nước mắm Phú Quốc</h3>
+                <div class="price">120.000đ</div>
+                <div class="new">Mới</div>
+                <div class="sales">Đã bán 23</div>
+                <div class="rating">
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="far fa-star empty"></i>
+                </div>
+                <div class="add-to-cart">Thêm vào giỏ</div>
+            </div>
+            <div class="product-card">
+                <img src="https://via.placeholder.com/200x150" alt="Bánh mì">
+                <h3>Bánh mì tươi</h3>
+                <div class="price">15.000đ</div>
+                <div class="new">Mới</div>
+                <div class="sales">Đã bán 50</div>
+                <div class="rating">
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                </div>
+                <div class="add-to-cart">Thêm vào giỏ</div>
+            </div>
+            <div class="product-card">
+                <img src="https://via.placeholder.com/200x150" alt="Trứng gà">
+                <h3>Trứng gà hữu cơ</h3>
+                <div class="price">50.000đ</div>
+                <div class="new">Mới</div>
+                <div class="sales">Đã bán 40</div>
+                <div class="rating">
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="far fa-star empty"></i>
+                </div>
+                <div class="add-to-cart">Thêm vào giỏ</div>
+            </div>
+        </div>
+    </div>
+    <div class="product-section">
+        <h2><i class="fas fa-rice"></i> Gen 8 Nồi cơm</h2>
+        <div class="product-grid">
+            <div class="product-card">
+                <img src="https://via.placeholder.com/200x150" alt="Nồi cơm 1">
+                <h3>Nồi cơm điện 1.8L</h3>
+                <div class="price">450.000đ</div>
+                <div class="new">Mới</div>
+                <div class="sales">Đã bán 15</div>
+                <div class="rating">
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="far fa-star empty"></i>
+                </div>
+                <div class="add-to-cart">Thêm vào giỏ</div>
+            </div>
+            <div class="product-card">
+                <img src="https://via.placeholder.com/200x150" alt="Nồi cơm 2">
+                <h3>Nồi cơm mini</h3>
+                <div class="price">300.000đ</div>
+                <div class="new">Mới</div>
+                <div class="sales">Đã bán 20</div>
+                <div class="rating">
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                </div>
+                <div class="add-to-cart">Thêm vào giỏ</div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div class="footer-links">
+            <a href="#">Về chúng tôi</a> |
+            <a href="#">Liên hệ</a> |
+            <a href="#">Chính sách</a>
+        </div>
+        <p>© 2025 VietMart - All rights reserved</p>
+    </footer>
+</body>
+</html>
